@@ -4,5 +4,5 @@ public class MiningFacility
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = "active"; // "active" or "inactive"
+    public bool IsActive { get; set; } = true;
 }

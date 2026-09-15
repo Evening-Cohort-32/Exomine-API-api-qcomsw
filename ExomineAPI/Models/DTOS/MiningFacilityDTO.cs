@@ -4,6 +4,6 @@ public class MiningFacilityDTO
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = "active";
+    public bool IsActive { get; set; } = true;
     public List<FacilityInventoryDTO> Inventory { get; set; } = new();
 }

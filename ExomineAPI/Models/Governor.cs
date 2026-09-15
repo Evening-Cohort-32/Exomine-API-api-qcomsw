@@ -5,5 +5,5 @@ public class Governor
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public int ColonyId { get; set; }
-    public string Status { get; set; } = "active"; // "active" or "inactive"
+    public bool Status { get; set; } = true;
 }

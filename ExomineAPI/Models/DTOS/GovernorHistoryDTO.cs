@@ -7,7 +7,6 @@ public class GovernorHistoryDTO
     public string? GovernorName { get; set; }
     public int ColonyId { get; set; }
     public string? ColonyName { get; set; }
-    public string PreviousStatus { get; set; } = string.Empty;
-    public string NewStatus { get; set; } = string.Empty;
+    public bool PreviousStatus { get; set; }
     public DateTime Timestamp { get; set; }
 }
