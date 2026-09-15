@@ -3,6 +3,8 @@ namespace ExomineAPI.Models.DTOs;
 public class TransactionDTO
 {
     public int Id { get; set; }
+    public int GovernorId { get; set; }
+    public string? GovernorName { get; set; }
     public int ColonyId { get; set; }
     public string? ColonyName { get; set; }
     public int MiningFacilityId { get; set; }

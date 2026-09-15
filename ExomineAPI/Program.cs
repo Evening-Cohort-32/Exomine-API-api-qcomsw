@@ -60,6 +60,8 @@ List<FacilityInventory> facilityInventories = new()
     new FacilityInventory { Id = 5, MiningFacilityId = 2, MineralId = 2, Quantity = 50 },
     new FacilityInventory { Id = 6, MiningFacilityId = 3, MineralId = 1, Quantity = 200 },
     new FacilityInventory { Id = 7, MiningFacilityId = 3, MineralId = 5, Quantity = 10 },
+    new FacilityInventory { Id = 8, MiningFacilityId = 2, MineralId = 5, Quantity = 5 },
+    new FacilityInventory { Id = 9, MiningFacilityId = 3, MineralId = 3, Quantity = 15 },
 };
 
 List<ColonyInventory> colonyInventories = new()
@@ -68,6 +70,10 @@ List<ColonyInventory> colonyInventories = new()
     new ColonyInventory { Id = 2, ColonyId = 1, MineralId = 2, Quantity = 20 },
     new ColonyInventory { Id = 3, ColonyId = 2, MineralId = 4, Quantity = 200 },
     new ColonyInventory { Id = 4, ColonyId = 3, MineralId = 1, Quantity = 10 },
+    new ColonyInventory { Id = 5, ColonyId = 1, MineralId = 3, Quantity = 5 },
+    new ColonyInventory { Id = 6, ColonyId = 2, MineralId = 2, Quantity = 10 },
+    new ColonyInventory { Id = 7, ColonyId = 2, MineralId = 5, Quantity = 2 },
+    new ColonyInventory { Id = 8, ColonyId = 3, MineralId = 4, Quantity = 30 },
 };
 
 List<GovernorHistory> governorHistories = new()
@@ -80,6 +86,22 @@ List<GovernorHistory> governorHistories = new()
         PreviousStatus = true,
         Timestamp = new DateTime(2026, 3, 4, 0, 0, 0, DateTimeKind.Utc),
     },
+    new GovernorHistory
+    {
+        Id = 2,
+        GovernorId = 1,
+        ColonyId = 1,
+        PreviousStatus = false,
+        Timestamp = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+    },
+    new GovernorHistory
+    {
+        Id = 3,
+        GovernorId = 4,
+        ColonyId = 1,
+        PreviousStatus = false,
+        Timestamp = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+    },
 };
 
 List<Transaction> transactions = new()
@@ -87,11 +109,53 @@ List<Transaction> transactions = new()
     new Transaction
     {
         Id = 1,
+        GovernorId = 1,
         ColonyId = 1,
         MiningFacilityId = 1,
         MineralId = 1,
         Quantity = 1,
         Timestamp = new DateTime(2026, 3, 10, 0, 0, 0, DateTimeKind.Utc),
+    },
+    new Transaction
+    {
+        Id = 2,
+        GovernorId = 2,
+        ColonyId = 2,
+        MiningFacilityId = 2,
+        MineralId = 4,
+        Quantity = 5,
+        Timestamp = new DateTime(2026, 3, 11, 0, 0, 0, DateTimeKind.Utc),
+    },
+    new Transaction
+    {
+        Id = 3,
+        GovernorId = 4,
+        ColonyId = 1,
+        MiningFacilityId = 1,
+        MineralId = 2,
+        Quantity = 2,
+        Timestamp = new DateTime(2026, 3, 12, 0, 0, 0, DateTimeKind.Utc),
+    },
+    new Transaction
+    {
+        // before Elena's 3/4 status change, so she was still active for this purchase.
+        Id = 4,
+        GovernorId = 3,
+        ColonyId = 3,
+        MiningFacilityId = 3,
+        MineralId = 1,
+        Quantity = 1,
+        Timestamp = new DateTime(2026, 2, 20, 0, 0, 0, DateTimeKind.Utc),
+    },
+    new Transaction
+    {
+        Id = 5,
+        GovernorId = 2,
+        ColonyId = 2,
+        MiningFacilityId = 2,
+        MineralId = 5,
+        Quantity = 1,
+        Timestamp = new DateTime(2026, 3, 14, 0, 0, 0, DateTimeKind.Utc),
     },
 };
 
