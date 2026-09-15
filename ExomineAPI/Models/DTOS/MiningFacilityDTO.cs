@@ -1,0 +1,9 @@
+namespace ExomineAPI.Models.DTOs;
+
+public class MiningFacilityDTO
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public List<FacilityInventoryDTO> Inventory { get; set; } = new();
+}
