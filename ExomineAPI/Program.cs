@@ -1,13 +1,12 @@
-using ExomineAPI.Models;
-using ExomineAPI.Models.DTOs;
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -44,14 +43,10 @@ List<MiningFacility> miningFacilities = new()
 
 List<Mineral> minerals = new()
 {
-    new Mineral { Id = 1, Name = "Iron" },
-    new Mineral { Id = 2, Name = "Magnesium" },
-    new Mineral { Id = 3, Name = "Titanium" },
-    new Mineral { Id = 4, Name = "Water Ice" },
-    new Mineral { Id = 5, Name = "Palladium" },
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-List<FacilityInventory> facilityInventories = new()
+app.MapGet("/weatherforecast", () =>
 {
     new FacilityInventory { Id = 1, MiningFacilityId = 1, MineralId = 1, Quantity = 500 },
     new FacilityInventory { Id = 2, MiningFacilityId = 1, MineralId = 2, Quantity = 300 },
@@ -104,7 +99,7 @@ List<GovernorHistory> governorHistories = new()
     },
 };
 
-List<Transaction> transactions = new()
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     new Transaction
     {
