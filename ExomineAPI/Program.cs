@@ -253,4 +253,38 @@ app.MapDelete("/api/governors/{id}", (int id) =>
     return Results.NoContent();
 });
 
+// ---------------------------------------------------------------------------
+// GovernorHistory endpoints
+// ---------------------------------------------------------------------------
+app.MapGet("/api/governorhistories", () =>
+{
+    return governorHistories.Select(gh => new GovernorHistoryDTO
+    {
+        Id = gh.Id,
+        GovernorId = gh.GovernorId,
+        GovernorName = governors.FirstOrDefault(g => g.Id == gh.GovernorId)?.Name,
+        ColonyId = gh.ColonyId,
+        ColonyName = colonies.FirstOrDefault(c => c.Id == gh.ColonyId)?.Name,
+        PreviousStatus = gh.PreviousStatus,
+        Timestamp = gh.Timestamp
+    });
+});
+
+app.MapGet("/api/governorhistories/{id}", (int id) =>
+{
+    GovernorHistory governorHistory = governorHistories.FirstOrDefault(gh => gh.Id == id);
+    if (governorHistory == null) { return Results.NotFound(); }
+
+    return Results.Ok(new GovernorHistoryDTO
+    {
+        Id = governorHistory.Id,
+        GovernorId = governorHistory.GovernorId,
+        GovernorName = governors.FirstOrDefault(g => g.Id == governorHistory.GovernorId)?.Name,
+        ColonyId = governorHistory.ColonyId,
+        ColonyName = colonies.FirstOrDefault(c => c.Id == governorHistory.ColonyId)?.Name,
+        PreviousStatus = governorHistory.PreviousStatus,
+        Timestamp = governorHistory.Timestamp
+    });
+});
+
 app.Run();
