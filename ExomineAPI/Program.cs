@@ -159,3 +159,98 @@ List<Transaction> transactions = new()
     },
 };
 
+// ---------------------------------------------------------------------------
+//Governor endpoints
+// ---------------------------------------------------------------------------
+app.MapGet("/api/Governors", () =>
+{
+    return governors.Select(g => new GovernorDTO
+    {
+        Id = g.Id,
+        Name = g.Name,
+        ColonyId = g.ColonyId,
+        Status = g.Status
+    });
+});
+
+app.MapGet("/api/governors/{id}", (int id) =>
+{
+    Governor governor = governors.FirstOrDefault(g => g.Id == id);
+    if (governor == null) { return Results.NotFound(); }
+    else return Results.Ok(new GovernorDTO
+    {
+        Id = governor.Id,
+        Name = governor.Name,
+        ColonyId = governor.ColonyId,
+        Status = governor.Status
+    });
+});
+
+app.MapPost("/api/governors", (Governor governor) =>
+{
+
+    //check if the provided colony id is valid
+    Colony colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
+    if (colony == null) { return Results.BadRequest(); }
+
+    //Create Id for the governor
+    governor.Id = governors.Max(g => g.Id) + 1;
+
+    //Add new governor to the database
+    governors.Add(governor);
+
+    return Results.Created($"/api/governors/{governor.Id}", new Governor
+    {
+        Id = governor.Id,
+        Name = governor.Name,
+        ColonyId = governor.ColonyId,
+        Status = true
+    });
+});
+
+app.MapPut("/api/governors/{id}", (int id, Governor governor) =>
+{
+    Governor governorToUpdate = governors.FirstOrDefault(g => g.Id == id);
+
+    //check if id of the provided governor is valid
+    if (governor == null || id != governor.Id) { return Results.BadRequest(); }
+
+    //check if the provided colony id is valid
+    Colony colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
+    if (colony == null) { return Results.BadRequest(); }
+
+    //check if status has changed
+    if (governorToUpdate.Status != governor.Status)
+    //if status has changed a GovernorHistory record will be created
+    {
+        governorHistories.Add(new GovernorHistory
+        {
+            Id = governorHistories.Max(g => g.Id) + 1,
+            GovernorId = governor.Id,
+            ColonyId = governor.ColonyId,
+            PreviousStatus = governorToUpdate.Status,
+            Timestamp = DateTime.Now
+        });
+    }
+
+    governors[id - 1] = governor;
+
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/governors/{id}", (int id) =>
+{
+    //check if id is valid
+    Governor governorToRemove = governors.FirstOrDefault(g => g.Id == id);
+    if (governorToRemove == null)
+    {
+        return Results.BadRequest();
+    }
+    ;
+    //remove governor for database.
+    governors.Remove(governorToRemove);
+
+    return Results.NoContent();
+});
+
+app.Run();
