@@ -3,6 +3,7 @@ namespace ExomineAPI.Models;
 public class Transaction
 {
     public int Id { get; set; }
+    public int GovernorId { get; set; }
     public int ColonyId { get; set; }
     public int MiningFacilityId { get; set; }
     public int MineralId { get; set; }
