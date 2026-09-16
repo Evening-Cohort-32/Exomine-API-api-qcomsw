@@ -253,4 +253,81 @@ app.MapDelete("/api/governors/{id}", (int id) =>
     return Results.NoContent();
 });
 
+
+// ---------------------------------------------------------------------------
+//Governor endpoints
+// ---------------------------------------------------------------------------
+
+app.MapGet("/api/colonies", () =>
+{
+    return colonies.Select(c => new ColonyDTO
+    {
+        Id = c.Id,
+        Name = c.Name,
+        Location = c.Location
+    });
+});
+
+app.MapGet("/api/colonies/{id}", (int id) =>
+{
+    Colony colony = colonies.FirstOrDefault(c => c.Id == id);
+    //check if id is valid
+    if (colony == null) { return Results.NotFound(); }
+
+    return Results.Ok(new ColonyDTO
+    {
+        Id = colony.Id,
+        Name = colony.Name,
+        Location = colony.Location,
+        Inventory = colonyInventories.Where(ci => ci.ColonyId == colony.Id)
+        .Select(ci => new ColonyInventoryDTO
+        {
+            Id = ci.Id,
+            ColonyId = ci.ColonyId,
+            MineralId = ci.MineralId,
+            MineralName = minerals.Where(m => m.Id == ci.MineralId)
+            .Select(m => m.Name).First(),
+            Quantity = ci.Quantity
+        }).ToList()
+    });
+});
+
+app.MapPost("/api/colonies/", (Colony colony) =>
+{
+    //create id for new colony
+    colony.Id = colonies.Max(c => c.Id) + 1;
+
+    //add new colony to database
+    colonies.Add(colony);
+
+    return Results.Created($"/api/colonies/{colony.Id}", new ColonyDTO
+    {
+        Id = colony.Id,
+        Name = colony.Name,
+        Location = colony.Location
+    });
+});
+
+app.MapPut("/api/colonies/{id}", (int id, Colony colony) =>
+{
+    //check if colony is valid
+    Colony colonyToUpdate = colonies.FirstOrDefault(c => c.Id == id);
+    if (colony.Id != id || colonyToUpdate == null) { return Results.BadRequest(); }
+
+    //update colony in database
+    colonies[id - 1] = colony;
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/colonies/{id}", (int id) =>
+{
+    //check if id is valid
+    Colony colonyToRemove = colonies.FirstOrDefault(c => c.Id == id);
+    if (colonyToRemove == null) { return Results.NotFound(); }
+
+    //remove colony from database
+    else colonies.Remove(colonyToRemove);
+    return Results.NoContent();
+});
+
 app.Run();
