@@ -329,7 +329,7 @@ app.MapGet("/api/governorhistories/{id}", (int id) =>
 
 
 // ---------------------------------------------------------------------------
-//Governor endpoints
+//Colony endpoints
 // ---------------------------------------------------------------------------
 
 app.MapGet("/api/colonies", () =>
