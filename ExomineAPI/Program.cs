@@ -8,6 +8,16 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new ApiErrorDTO { Error = "An unexpected error occurred." });
+    });
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -160,24 +170,38 @@ List<Transaction> transactions = new()
 };
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+IResult Error(int statusCode, string message) =>
+    Results.Json(new ApiErrorDTO { Error = message }, statusCode: statusCode);
+
+// ---------------------------------------------------------------------------
 //Governor endpoints
 // ---------------------------------------------------------------------------
-app.MapGet("/api/Governors", () =>
+app.MapGet("/api/governors", (bool? active) =>
 {
-    return governors.Select(g => new GovernorDTO
+    var query = governors.AsEnumerable();
+    if (active is not null)
+    {
+        query = query.Where(g => g.Status == active.Value);
+    }
+    return Results.Ok(query.Select(g => new GovernorDTO
     {
         Id = g.Id,
         Name = g.Name,
         ColonyId = g.ColonyId,
         Status = g.Status
-    });
+    }));
 });
 
 app.MapGet("/api/governors/{id}", (int id) =>
 {
-    Governor governor = governors.FirstOrDefault(g => g.Id == id);
-    if (governor == null) { return Results.NotFound(); }
-    else return Results.Ok(new GovernorDTO
+    Governor? governor = governors.FirstOrDefault(g => g.Id == id);
+    if (governor is null)
+    {
+        return Error(404, $"Governor with id {id} not found.");
+    }
+    return Results.Ok(new GovernorDTO
     {
         Id = governor.Id,
         Name = governor.Name,
@@ -188,68 +212,81 @@ app.MapGet("/api/governors/{id}", (int id) =>
 
 app.MapPost("/api/governors", (Governor governor) =>
 {
+    if (string.IsNullOrWhiteSpace(governor.Name))
+    {
+        return Error(400, "Governor name is required.");
+    }
 
-    //check if the provided colony id is valid
-    Colony colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
-    if (colony == null) { return Results.BadRequest(); }
+    Colony? colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
+    if (colony is null)
+    {
+        return Error(400, $"Colony with id {governor.ColonyId} does not exist.");
+    }
 
-    //Create Id for the governor
-    governor.Id = governors.Max(g => g.Id) + 1;
-
-    //Add new governor to the database
+    governor.Id = governors.Count == 0 ? 1 : governors.Max(g => g.Id) + 1;
     governors.Add(governor);
 
-    return Results.Created($"/api/governors/{governor.Id}", new Governor
+    return Results.Created($"/api/governors/{governor.Id}", new GovernorDTO
     {
         Id = governor.Id,
         Name = governor.Name,
         ColonyId = governor.ColonyId,
-        Status = true
+        Status = governor.Status
     });
 });
 
 app.MapPut("/api/governors/{id}", (int id, Governor governor) =>
 {
-    Governor governorToUpdate = governors.FirstOrDefault(g => g.Id == id);
+    if (id != governor.Id)
+    {
+        return Error(400, "The id in the route must match the id in the request body.");
+    }
+    if (string.IsNullOrWhiteSpace(governor.Name))
+    {
+        return Error(400, "Governor name is required.");
+    }
 
-    //check if id of the provided governor is valid
-    if (governor == null || id != governor.Id) { return Results.BadRequest(); }
+    Governor? governorToUpdate = governors.FirstOrDefault(g => g.Id == id);
+    if (governorToUpdate is null)
+    {
+        return Error(404, $"Governor with id {id} not found.");
+    }
 
-    //check if the provided colony id is valid
-    Colony colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
-    if (colony == null) { return Results.BadRequest(); }
+    Colony? colony = colonies.FirstOrDefault(c => c.Id == governor.ColonyId);
+    if (colony is null)
+    {
+        return Error(400, $"Colony with id {governor.ColonyId} does not exist.");
+    }
 
-    //check if status has changed
+    //status change is recorded automatically, never a separate client request
     if (governorToUpdate.Status != governor.Status)
-    //if status has changed a GovernorHistory record will be created
     {
         governorHistories.Add(new GovernorHistory
         {
-            Id = governorHistories.Max(g => g.Id) + 1,
-            GovernorId = governor.Id,
-            ColonyId = governor.ColonyId,
+            Id = governorHistories.Count == 0 ? 1 : governorHistories.Max(g => g.Id) + 1,
+            GovernorId = governorToUpdate.Id,
+            ColonyId = governorToUpdate.ColonyId,
             PreviousStatus = governorToUpdate.Status,
-            Timestamp = DateTime.Now
+            Timestamp = DateTime.UtcNow,
         });
     }
 
-    governors[id - 1] = governor;
+    governorToUpdate.Name = governor.Name;
+    governorToUpdate.ColonyId = governor.ColonyId;
+    governorToUpdate.Status = governor.Status;
 
     return Results.NoContent();
 });
 
 app.MapDelete("/api/governors/{id}", (int id) =>
 {
-    //check if id is valid
-    Governor governorToRemove = governors.FirstOrDefault(g => g.Id == id);
-    if (governorToRemove == null)
+    Governor? governorToRemove = governors.FirstOrDefault(g => g.Id == id);
+    if (governorToRemove is null)
     {
-        return Results.BadRequest();
+        return Error(404, $"Governor with id {id} not found.");
     }
-    ;
-    //remove governor for database.
-    governors.Remove(governorToRemove);
 
+    governors.Remove(governorToRemove);
     return Results.NoContent();
 });
 
@@ -272,8 +309,11 @@ app.MapGet("/api/governorhistories", () =>
 
 app.MapGet("/api/governorhistories/{id}", (int id) =>
 {
-    GovernorHistory governorHistory = governorHistories.FirstOrDefault(gh => gh.Id == id);
-    if (governorHistory == null) { return Results.NotFound(); }
+    GovernorHistory? governorHistory = governorHistories.FirstOrDefault(gh => gh.Id == id);
+    if (governorHistory is null)
+    {
+        return Error(404, $"Governor history with id {id} not found.");
+    }
 
     return Results.Ok(new GovernorHistoryDTO
     {
