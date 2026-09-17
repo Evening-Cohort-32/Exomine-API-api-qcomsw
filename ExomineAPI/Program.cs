@@ -309,8 +309,11 @@ app.MapGet("/api/governorhistories", () =>
 
 app.MapGet("/api/governorhistories/{id}", (int id) =>
 {
-    GovernorHistory governorHistory = governorHistories.FirstOrDefault(gh => gh.Id == id);
-    if (governorHistory == null) { return Results.NotFound(); }
+    GovernorHistory? governorHistory = governorHistories.FirstOrDefault(gh => gh.Id == id);
+    if (governorHistory is null)
+    {
+        return Error(404, $"Governor history with id {id} not found.");
+    }
 
     return Results.Ok(new GovernorHistoryDTO
     {
