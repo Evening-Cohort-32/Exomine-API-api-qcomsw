@@ -403,4 +403,52 @@ app.MapDelete("/api/colonies/{id}", (int id) =>
     return Results.NoContent();
 });
 
+// ---------------------------------------------------------------------------
+//Transaction endpoints
+// ---------------------------------------------------------------------------
+
+app.MapGet("/api/transactions", () =>
+{
+    return transactions.Select(t => new TransactionDTO
+    {
+        Id = t.Id,
+        GovernorId = t.GovernorId,
+        GovernorName = governors.Where(g => g.Id == t.GovernorId).Select(g => g.Name).First(),
+        ColonyId = t.ColonyId,
+        ColonyName = colonies.Where(c => c.Id == t.ColonyId).Select(c => c.Name).First(),
+        MineralId = t.MineralId,
+        MineralName = minerals.Where(m => m.Id == t.MineralId).Select(m => m.Name).First(),
+        MiningFacilityId = t.MiningFacilityId,
+        FacilityName = miningFacilities.Where(mf => mf.Id == t.MiningFacilityId).Select(mf => mf.Name).First(),
+        Quantity = t.Quantity,
+        Timestamp = t.Timestamp
+    });
+});
+
+app.MapGet("/api/transactions/{id}", (int id) =>
+{
+    Transaction transaction = transactions.FirstOrDefault(t => t.Id == id);
+    //check if transaction is valid
+    if (transaction == null)
+    {
+        return Error(404, $"Transaction with id {id} not found.");
+    }
+
+    return Results.Ok(new TransactionDTO
+    {
+        Id = transaction.Id,
+        GovernorId = transaction.GovernorId,
+        GovernorName = governors.Where(g => g.Id == transaction.GovernorId).Select(g => g.Name).First(),
+        ColonyId = transaction.ColonyId,
+        ColonyName = colonies.Where(c => c.Id == transaction.ColonyId).Select(c => c.Name).First(),
+        MineralId = transaction.MineralId,
+        MineralName = minerals.Where(m => m.Id == transaction.MineralId).Select(m => m.Name).First(),
+        MiningFacilityId = transaction.MiningFacilityId,
+        FacilityName = miningFacilities.Where(mf => mf.Id == transaction.MiningFacilityId).Select(mf => mf.Name).First(),
+        Quantity = transaction.Quantity,
+        Timestamp = transaction.Timestamp
+    });
+});
+
+
 app.Run();
