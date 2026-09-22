@@ -404,12 +404,72 @@ app.MapDelete("/api/colonies/{id}", (int id) =>
 });
 
 // ---------------------------------------------------------------------------
+//MiningFacility endpoints
+// ---------------------------------------------------------------------------
+
+app.MapGet("/api/miningfacilities", (bool? active) =>
+{
+    IEnumerable<MiningFacility> query = miningFacilities;
+    if (active != null)
+    {
+        query = query.Where(mf => mf.IsActive == active.Value);
+    }
+
+    return query.Select(mf => new MiningFacilityDTO
+    {
+        Id = mf.Id,
+        Name = mf.Name,
+        IsActive = mf.IsActive
+    });
+});
+
+// ---------------------------------------------------------------------------
+//Mineral endpoints
+// ---------------------------------------------------------------------------
+
+app.MapGet("/api/minerals", () =>
+{
+    return minerals.Select(m => new MineralDTO
+    {
+        Id = m.Id,
+        Name = m.Name
+    });
+});
+
+// ---------------------------------------------------------------------------
 //Transaction endpoints
 // ---------------------------------------------------------------------------
 
-app.MapGet("/api/transactions", () =>
+app.MapGet("/api/transactions", (int? governorId, int? colonyId, int? miningFacilityId, int? mineralId, DateTime? startDate, DateTime? endDate) =>
 {
-    return transactions.Select(t => new TransactionDTO
+    IEnumerable<Transaction> query = transactions;
+
+    if (governorId != null)
+    {
+        query = query.Where(t => t.GovernorId == governorId.Value);
+    }
+    if (colonyId != null)
+    {
+        query = query.Where(t => t.ColonyId == colonyId.Value);
+    }
+    if (miningFacilityId != null)
+    {
+        query = query.Where(t => t.MiningFacilityId == miningFacilityId.Value);
+    }
+    if (mineralId != null)
+    {
+        query = query.Where(t => t.MineralId == mineralId.Value);
+    }
+    if (startDate != null)
+    {
+        query = query.Where(t => t.Timestamp >= startDate.Value);
+    }
+    if (endDate != null)
+    {
+        query = query.Where(t => t.Timestamp <= endDate.Value);
+    }
+
+    return query.Select(t => new TransactionDTO
     {
         Id = t.Id,
         GovernorId = t.GovernorId,
