@@ -511,4 +511,87 @@ app.MapGet("/api/transactions/{id}", (int id) =>
 });
 
 
+// ---------------------------------------------------------------------------
+// Purchase endpoint
+// ---------------------------------------------------------------------------
+
+app.MapPut("/api/purchases", (PurchaseRequestDTO request) =>
+{
+    Governor? governor = governors.FirstOrDefault(g => g.Id == request.GovernorId);
+    if (governor is null)
+    {
+        return Error(404, $"Governor with id {request.GovernorId} not found.");
+    }
+
+    MiningFacility? facility = miningFacilities.FirstOrDefault(f => f.Id == request.MiningFacilityId);
+    if (facility is null)
+    {
+        return Error(404, $"Mining facility with id {request.MiningFacilityId} not found.");
+    }
+
+    if (!governor.Status)
+    {
+        return Error(409, "Governor is inactive.");
+    }
+
+    if (!facility.IsActive)
+    {
+        return Error(409, "Mining facility is inactive.");
+    }
+
+    FacilityInventory? facilityInventory = facilityInventories
+        .FirstOrDefault(fi => fi.MiningFacilityId == request.MiningFacilityId && fi.MineralId == request.MineralId);
+    if (facilityInventory is null || facilityInventory.Quantity < 1)
+    {
+        return Error(409, "Insufficient quantity at facility.");
+    }
+
+    // All validation passed — safe to mutate state now.
+    facilityInventory.Quantity -= 1;
+
+    ColonyInventory? colonyInventory = colonyInventories
+        .FirstOrDefault(ci => ci.ColonyId == governor.ColonyId && ci.MineralId == request.MineralId);
+    if (colonyInventory is null)
+    {
+        colonyInventory = new ColonyInventory
+        {
+            Id = colonyInventories.Count == 0 ? 1 : colonyInventories.Max(ci => ci.Id) + 1,
+            ColonyId = governor.ColonyId,
+            MineralId = request.MineralId,
+            Quantity = 0
+        };
+        colonyInventories.Add(colonyInventory);
+    }
+    colonyInventory.Quantity += 1;
+
+    Transaction transaction = new Transaction
+    {
+        Id = transactions.Count == 0 ? 1 : transactions.Max(t => t.Id) + 1,
+        GovernorId = governor.Id,
+        ColonyId = governor.ColonyId,
+        MiningFacilityId = facility.Id,
+        MineralId = request.MineralId,
+        Quantity = 1,
+        Timestamp = DateTime.UtcNow
+    };
+    transactions.Add(transaction);
+
+    Mineral? mineral = minerals.FirstOrDefault(m => m.Id == request.MineralId);
+
+    return Results.Ok(new TransactionDTO
+    {
+        Id = transaction.Id,
+        GovernorId = transaction.GovernorId,
+        GovernorName = governor.Name,
+        ColonyId = transaction.ColonyId,
+        ColonyName = colonies.FirstOrDefault(c => c.Id == transaction.ColonyId)?.Name,
+        MiningFacilityId = transaction.MiningFacilityId,
+        FacilityName = facility.Name,
+        MineralId = transaction.MineralId,
+        MineralName = mineral?.Name,
+        Quantity = transaction.Quantity,
+        Timestamp = transaction.Timestamp
+    });
+});
+
 app.Run();
