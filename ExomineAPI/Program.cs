@@ -454,6 +454,12 @@ app.MapGet("/api/minerals/{id}", (int id) =>
 
 app.MapPost("/api/minerals", (Mineral mineral) =>
 {
+    //check if mineral name already exists
+    if (minerals.FirstOrDefault(m => m.Name.ToLower() == mineral.Name.ToLower()) != null)
+    {
+        return Results.BadRequest($"Mineral with name {mineral.Name} already exists");
+    }
+
     mineral.Id = minerals.Max(m => m.Id) + 1;
     minerals.Add(mineral);
     return Results.Created($"/api/minerals/{mineral.Id}", new MineralDTO
@@ -651,5 +657,104 @@ app.MapPut("/api/purchases", (PurchaseRequestDTO request) =>
 //Colony Inventory endpoint
 // ---------------------------------------------------------------------------
 
+app.MapGet("/api/colonyInventories", () =>
+{
+    return Results.Ok(colonyInventories.Select(ci => new ColonyInventoryDTO
+    {
+        Id = ci.Id,
+        ColonyId = ci.ColonyId,
+        MineralId = ci.MineralId,
+        MineralName = minerals.Where(m => m.Id == ci.MineralId)
+        .Select(m => m.Name).First(),
+        Quantity = ci.Quantity
+    }));
+});
+
+app.MapGet("/api/colonyInventories/{id}", (int id) =>
+{
+    ColonyInventory colonyInventory = colonyInventories.FirstOrDefault(ci => ci.Id == id);
+    //check if colonyInventories id valid
+    if (colonyInventory == null)
+    {
+        return Results.NotFound($"colonyInventory with id {id} not found");
+    }
+
+    return Results.Ok(new ColonyInventoryDTO
+    {
+        Id = colonyInventory.Id,
+        ColonyId = colonyInventory.ColonyId,
+        MineralId = colonyInventory.MineralId,
+        MineralName = minerals.Where(m => m.Id == colonyInventory.MineralId)
+        .Select(m => m.Name).First(),
+        Quantity = colonyInventory.Quantity
+    });
+});
+
+app.MapPost("/api/colonyInventories", (ColonyInventory colonyInventory) =>
+{
+    //check if colonyId is valid
+    if (colonies.FirstOrDefault(c => c.Id == colonyInventory.ColonyId) == null)
+    {
+        return Results.BadRequest($"No colony found with id {colonyInventory.ColonyId}");
+    }
+    //check if mineralId is valid
+    if (minerals.FirstOrDefault(m => m.Id == colonyInventory.MineralId) == null)
+    {
+        return Results.BadRequest($"No mineral found with id {colonyInventory.MineralId}");
+    }
+
+    colonyInventory.Id = colonyInventories.Max(ci => ci.Id + 1);
+    colonyInventories.Add(colonyInventory);
+    return Results.Created($"/api/colonyInventories/{colonyInventory.Id}", new ColonyInventoryDTO
+    {
+        Id = colonyInventory.Id,
+        ColonyId = colonyInventory.ColonyId,
+        MineralId = colonyInventory.MineralId,
+        MineralName = minerals.Where(m => m.Id == colonyInventory.MineralId)
+        .Select(m => m.Name).First(),
+        Quantity = colonyInventory.Quantity
+    });
+});
+
+app.MapPut("/api/colonyInventories/{id}", (int id, ColonyInventory colonyInventory) =>
+{
+    ColonyInventory colonyInventoryToUpdate = colonyInventories.FirstOrDefault(ci => ci.Id == id);
+    //check if id is valid
+    if (colonyInventoryToUpdate == null)
+    {
+        return Results.BadRequest($"No colonyInventory found with id {id}");
+    }
+    //check if colonyId is valid
+    if (colonies.FirstOrDefault(c => c.Id == colonyInventory.ColonyId) == null)
+    {
+        return Results.BadRequest($"No colony found with id {colonyInventory.ColonyId}");
+    }
+    //check if mineralId is valid
+    if (minerals.FirstOrDefault(m => m.Id == colonyInventory.MineralId) == null)
+    {
+        return Results.BadRequest($"No mineral found with id {colonyInventory.MineralId}");
+    }
+
+    colonyInventory.Id = id;
+
+    colonyInventories[colonyInventoryToUpdate.Id - 1] = colonyInventory;
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/colonyInventories/{id}", (int id) =>
+{
+    ColonyInventory colonyInventoryToDelete = colonyInventories.FirstOrDefault(ci => ci.Id == id);
+    if (colonyInventoryToDelete == null)
+    {
+        return Results.BadRequest($"No colonyInventory found with id {id}");
+    }
+
+    colonyInventories.Remove(colonyInventoryToDelete);
+    return Results.NoContent();
+});
+
+// ---------------------------------------------------------------------------
+//Facility Inventory endpoint
+// ---------------------------------------------------------------------------
 
 app.Run();
