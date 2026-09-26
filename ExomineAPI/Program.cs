@@ -757,4 +757,95 @@ app.MapDelete("/api/colonyInventories/{id}", (int id) =>
 //Facility Inventory endpoint
 // ---------------------------------------------------------------------------
 
+app.MapGet("/api/facilityInventory", () =>
+{
+    return facilityInventories.Select(fi => new FacilityInventoryDTO
+    {
+        Id = fi.Id,
+        MineralId = fi.Id,
+        MineralName = minerals.Where(m => m.Id == fi.MineralId)
+         .Select(m => m.Name).First(),
+        MiningFacilityId = fi.MiningFacilityId,
+        Quantity = fi.Quantity
+    });
+});
+
+app.MapGet("/api/facilityInventory/{id}", (int id) =>
+{
+    FacilityInventory facilityInventory = facilityInventories.FirstOrDefault(fi => fi.Id == id);
+    if (facilityInventory == null)
+    {
+        return Results.NotFound($"No facilityInventory found with id {id}");
+    }
+
+    return Results.Ok(new FacilityInventoryDTO
+    {
+        Id = facilityInventory.Id,
+        MineralId = facilityInventory.Id,
+        MineralName = minerals.Where(m => m.Id == facilityInventory.MineralId)
+        .Select(m => m.Name).First(),
+        MiningFacilityId = facilityInventory.MiningFacilityId,
+        Quantity = facilityInventory.Quantity
+    });
+});
+
+app.MapPost("api/facilityInventory", (FacilityInventory facilityInventory) =>
+{
+    //check mineralId
+    if (minerals.FirstOrDefault(m => m.Id == facilityInventory.MineralId) == null)
+    {
+        return Results.BadRequest($"No mineral found with id {facilityInventory.MineralId}");
+    }
+    //check facilityId
+    if (miningFacilities.FirstOrDefault(mf => mf.Id == facilityInventory.MiningFacilityId) == null)
+    {
+        return Results.BadRequest($"No mining facility found with id {facilityInventory.MiningFacilityId}");
+    }
+
+    facilityInventory.Id = facilityInventories.Max(fi => fi.Id + 1);
+    facilityInventories.Add(facilityInventory);
+    return Results.Created($"/api/facilityInventory/{facilityInventory.Id}", new FacilityInventoryDTO
+    {
+        Id = facilityInventory.Id,
+        MineralId = facilityInventory.Id,
+        MineralName = minerals.Where(m => m.Id == facilityInventory.MineralId)
+        .Select(m => m.Name).First(),
+        MiningFacilityId = facilityInventory.MiningFacilityId,
+        Quantity = facilityInventory.Quantity
+    });
+});
+
+app.MapPut("api/facilityInventory/{id}", (int id, FacilityInventory facilityInventory) =>
+{
+    if (facilityInventories.FirstOrDefault(fi => fi.Id == id) == null)
+    {
+        return Results.BadRequest($"No facilityInventory found with id {id}");
+    }
+    if (minerals.FirstOrDefault(m => m.Id == facilityInventory.MineralId) == null)
+    {
+        return Results.BadRequest($"No mineral found with id {facilityInventory.MineralId}");
+    }
+    //check facilityId
+    if (miningFacilities.FirstOrDefault(mf => mf.Id == facilityInventory.MiningFacilityId) == null)
+    {
+        return Results.BadRequest($"No mining facility found with id {facilityInventory.MiningFacilityId}");
+    }
+
+    facilityInventory.Id = id;
+    facilityInventories[id - 1] = facilityInventory;
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/facilityInventory/{id}", (int id) =>
+{
+    FacilityInventory facilityInventoryToDelete = facilityInventories.FirstOrDefault(fi => fi.Id == id);
+    if (facilityInventoryToDelete == null)
+    {
+        return Results.BadRequest($"No facilityInventory found with id {id}");
+    }
+
+    facilityInventories.Remove(facilityInventoryToDelete);
+    return Results.NoContent();
+});
+
 app.Run();
