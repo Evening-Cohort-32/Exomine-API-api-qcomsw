@@ -436,6 +436,59 @@ app.MapGet("/api/minerals", () =>
     });
 });
 
+app.MapGet("/api/minerals/{id}", (int id) =>
+{
+    Mineral mineral = minerals.FirstOrDefault(m => m.Id == id);
+    //check if mineral is valid
+    if (mineral == null)
+    {
+        return Results.NotFound($"Mineral with id {id} not found");
+    }
+
+    return Results.Ok(new MineralDTO
+    {
+        Id = mineral.Id,
+        Name = mineral.Name,
+    });
+});
+
+app.MapPost("/api/minerals", (Mineral mineral) =>
+{
+    mineral.Id = minerals.Max(m => m.Id) + 1;
+    minerals.Add(mineral);
+    return Results.Created($"/api/minerals/{mineral.Id}", new MineralDTO
+    {
+        Id = mineral.Id,
+        Name = mineral.Name
+    });
+});
+
+app.MapPut("/api/minerals/{id}", (int id, Mineral mineral) =>
+{
+    Mineral mineralToUpdate = minerals.FirstOrDefault(m => m.Id == id);
+    //check if mineral is valid
+    if (mineralToUpdate == null)
+    {
+        return Results.BadRequest($"Mineral with id {id} not found");
+    }
+
+    minerals[id - 1] = mineral;
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/minerals/{id}", (int id) =>
+{
+    Mineral mineralToDelete = minerals.FirstOrDefault(m => m.Id == id);
+    //check if mineral is valid
+    if (mineralToDelete == null)
+    {
+        return Results.BadRequest($"No mineral with id {id} found");
+    }
+
+    minerals.Remove(mineralToDelete);
+    return Results.NoContent();
+});
+
 // ---------------------------------------------------------------------------
 //Transaction endpoints
 // ---------------------------------------------------------------------------
@@ -593,5 +646,10 @@ app.MapPut("/api/purchases", (PurchaseRequestDTO request) =>
         Timestamp = transaction.Timestamp
     });
 });
+
+// ---------------------------------------------------------------------------
+//Colony Inventory endpoint
+// ---------------------------------------------------------------------------
+
 
 app.Run();
