@@ -423,6 +423,84 @@ app.MapGet("/api/miningfacilities", (bool? active) =>
     });
 });
 
+app.MapGet("/api/miningfacilities/{id}", (int id) =>
+{
+    MiningFacility facility = miningFacilities.FirstOrDefault(mf => mf.Id == id);
+    if (facility == null)
+    {
+        return Error(404, $"Mining facility with id {id} not found.");
+    }
+
+    return Results.Ok(new MiningFacilityDTO
+    {
+        Id = facility.Id,
+        Name = facility.Name,
+        IsActive = facility.IsActive,
+        Inventory = facilityInventories.Where(fi => fi.MiningFacilityId == facility.Id)
+            .Select(fi => new FacilityInventoryDTO
+            {
+                Id = fi.Id,
+                MiningFacilityId = fi.MiningFacilityId,
+                MineralId = fi.MineralId,
+                MineralName = minerals.Where(m => m.Id == fi.MineralId).Select(m => m.Name).First(),
+                Quantity = fi.Quantity
+            }).ToList()
+    });
+});
+
+app.MapPost("/api/miningfacilities", (MiningFacility facility) =>
+{
+    if (string.IsNullOrWhiteSpace(facility.Name))
+    {
+        return Error(400, "Mining facility name is required.");
+    }
+
+    facility.Id = miningFacilities.Count == 0 ? 1 : miningFacilities.Max(mf => mf.Id) + 1;
+    miningFacilities.Add(facility);
+
+    return Results.Created($"/api/miningfacilities/{facility.Id}", new MiningFacilityDTO
+    {
+        Id = facility.Id,
+        Name = facility.Name,
+        IsActive = facility.IsActive
+    });
+});
+
+app.MapPut("/api/miningfacilities/{id}", (int id, MiningFacility facility) =>
+{
+    if (id != facility.Id)
+    {
+        return Error(400, "The id in the route must match the id in the request body.");
+    }
+    if (string.IsNullOrWhiteSpace(facility.Name))
+    {
+        return Error(400, "Mining facility name is required.");
+    }
+
+    MiningFacility facilityToUpdate = miningFacilities.FirstOrDefault(mf => mf.Id == id);
+    if (facilityToUpdate == null)
+    {
+        return Error(404, $"Mining facility with id {id} not found.");
+    }
+
+    facilityToUpdate.Name = facility.Name;
+    facilityToUpdate.IsActive = facility.IsActive;
+
+    return Results.NoContent();
+});
+
+app.MapDelete("/api/miningfacilities/{id}", (int id) =>
+{
+    MiningFacility facilityToRemove = miningFacilities.FirstOrDefault(mf => mf.Id == id);
+    if (facilityToRemove == null)
+    {
+        return Error(404, $"Mining facility with id {id} not found.");
+    }
+
+    miningFacilities.Remove(facilityToRemove);
+    return Results.NoContent();
+});
+
 // ---------------------------------------------------------------------------
 //Mineral endpoints
 // ---------------------------------------------------------------------------
