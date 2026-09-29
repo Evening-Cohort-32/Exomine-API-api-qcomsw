@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -22,6 +23,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors(options =>
+                {
+                    options.AllowAnyOrigin();
+                    options.AllowAnyMethod();
+                    options.AllowAnyHeader();
+                });
 }
 
 app.UseHttpsRedirection();
@@ -206,6 +213,8 @@ app.MapGet("/api/governors/{id}", (int id) =>
         Id = governor.Id,
         Name = governor.Name,
         ColonyId = governor.ColonyId,
+        ColonyName = colonies.Where(c => c.Id == governor.ColonyId)
+        .Select(c => c.Name).First(),
         Status = governor.Status
     });
 });
@@ -840,7 +849,7 @@ app.MapGet("/api/facilityInventory", () =>
     return facilityInventories.Select(fi => new FacilityInventoryDTO
     {
         Id = fi.Id,
-        MineralId = fi.Id,
+        MineralId = fi.MineralId,
         MineralName = minerals.Where(m => m.Id == fi.MineralId)
          .Select(m => m.Name).First(),
         MiningFacilityId = fi.MiningFacilityId,
@@ -859,7 +868,7 @@ app.MapGet("/api/facilityInventory/{id}", (int id) =>
     return Results.Ok(new FacilityInventoryDTO
     {
         Id = facilityInventory.Id,
-        MineralId = facilityInventory.Id,
+        MineralId = facilityInventory.MineralId,
         MineralName = minerals.Where(m => m.Id == facilityInventory.MineralId)
         .Select(m => m.Name).First(),
         MiningFacilityId = facilityInventory.MiningFacilityId,
@@ -885,7 +894,7 @@ app.MapPost("api/facilityInventory", (FacilityInventory facilityInventory) =>
     return Results.Created($"/api/facilityInventory/{facilityInventory.Id}", new FacilityInventoryDTO
     {
         Id = facilityInventory.Id,
-        MineralId = facilityInventory.Id,
+        MineralId = facilityInventory.MineralId,
         MineralName = minerals.Where(m => m.Id == facilityInventory.MineralId)
         .Select(m => m.Name).First(),
         MiningFacilityId = facilityInventory.MiningFacilityId,
